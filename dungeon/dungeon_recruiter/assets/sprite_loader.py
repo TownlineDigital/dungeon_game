@@ -1,0 +1,197 @@
+import os
+import pygame
+
+def load_sprite(path, scale):
+    image = pygame.image.load(path).convert_alpha()
+    if image.get_size() != (scale, scale):
+        image = pygame.transform.scale(image, (scale, scale))
+    return image
+
+# def load_sprite(path, scale=32):
+#     sprite = pygame.image.load(path).convert_alpha()
+#     return pygame.transform.scale(sprite, (scale, scale))
+
+def get_player_idle_sprite(name, scale=None):
+    safe_name = name.lower()
+    filename = f"{safe_name}_idle_0.png"
+    path = os.path.join("assets", "sprites", safe_name, "idle", filename)
+
+    if os.path.exists(path):
+        sprite = pygame.image.load(path).convert_alpha()
+        if scale:
+            sprite = pygame.transform.scale(sprite, (scale, scale))
+        return sprite
+    else:
+        print(f"[ERROR] Player idle sprite not found at: {path}")
+        fallback_size = scale or 96
+        fallback = pygame.Surface((fallback_size, fallback_size), pygame.SRCALPHA)
+        pygame.draw.rect(fallback, (255, 0, 0, 128), fallback.get_rect(), 2)
+        return fallback
+
+def get_enemy_idle_sprite(name, scale=None):
+    safe_name = name.lower().replace(" ", "_")
+    filename = f"{safe_name}_idle_0.png"
+    path = os.path.join("assets", "enemy_sprites", safe_name, "idle", filename)
+
+    if os.path.exists(path):
+        sprite = pygame.image.load(path).convert_alpha()
+        if scale:
+            sprite = pygame.transform.scale(sprite, (scale, scale))
+        return sprite
+    else:
+        print(f"[ERROR] Enemy idle sprite not found at: {path}")
+        fallback_size = scale or 96
+        fallback = pygame.Surface((fallback_size, fallback_size), pygame.SRCALPHA)
+        pygame.draw.rect(fallback, (255, 0, 0, 128), fallback.get_rect(), 2)
+        return fallback
+
+def get_in_dungeon_sprite(name, scale=None, is_enemy=False):
+    """
+    Load in-dungeon sprite for characters and enemies by name.
+    `is_enemy`: True if loading for an enemy.
+    `scale`: optional int size to scale the sprite to.
+    """
+    base_folder = "enemy_sprites" if is_enemy else "sprites"
+    safe_name = name.lower().replace(" ", "_")
+    filename = f"{safe_name}_in_dungeon.png"
+    path = os.path.join("assets", base_folder, safe_name, "in_dungeon", filename)
+
+    if os.path.exists(path):
+        sprite = pygame.image.load(path).convert_alpha()
+        if scale:
+            sprite = pygame.transform.scale(sprite, (scale, scale))
+        return sprite
+    else:
+        print(f"[ERROR] In-dungeon sprite not found at: {path}")
+        fallback_size = scale or 32
+        fallback = pygame.Surface((fallback_size, fallback_size), pygame.SRCALPHA)
+        pygame.draw.rect(fallback, (0, 255, 0, 128), fallback.get_rect(), 2)
+        return fallback
+
+def load_dungeon_assets(tile_size=32):
+    """
+    Preloads static tile, enemy, and player sprites into a dictionary.
+    Used for the dungeon exploration map.
+    """
+    sprite_dict = {}
+
+    # Tiles
+    tile_path = os.path.join("assets", "tiles")
+    if os.path.exists(tile_path):
+        for file in os.listdir(tile_path):
+            if file.endswith(".png"):
+                key = file.split(".")[0].upper()
+                path = os.path.join(tile_path, file)
+                sprite_dict[key] = load_sprite(path, scale=tile_size)
+                print(f"[TILE] Loaded: {key} from {path}")
+
+    # Enemy in-dungeon sprites
+    enemy_base = os.path.join("assets", "enemy_sprites")
+    if os.path.exists(enemy_base):
+        for enemy_folder in os.listdir(enemy_base):
+            in_dungeon_path = os.path.join(enemy_base, enemy_folder, "in_dungeon")
+            if os.path.exists(in_dungeon_path):
+                for file in os.listdir(in_dungeon_path):
+                    if file.endswith(".png"):
+                        key = f"ENEMY_{enemy_folder.upper()}"
+                        path = os.path.join(in_dungeon_path, file)
+                        sprite_dict[key] = load_sprite(path,scale=tile_size)
+                        print(f"[ENEMY] Loaded: {key} from {path}")
+
+    # Player in-dungeon sprites
+    player_base = os.path.join("assets", "sprites")
+    if os.path.exists(player_base):
+        for player_folder in os.listdir(player_base):
+            in_dungeon_path = os.path.join(player_base, player_folder, "in_dungeon")
+            if os.path.exists(in_dungeon_path):
+                for file in os.listdir(in_dungeon_path):
+                    if file.endswith(".png"):
+                        key = f"PLAYER_{player_folder.upper()}"
+                        path = os.path.join(in_dungeon_path, file)
+                        sprite_dict[key] = load_sprite(path, scale=tile_size)
+                        print(f"[PLAYER] Loaded: {key} from {path}")
+
+    return sprite_dict
+
+
+
+
+
+# import os
+# import pygame
+#
+# def load_sprite(path, scale=32):
+#     sprite = pygame.image.load(path).convert_alpha()
+#     return pygame.transform.scale(sprite, (scale, scale))
+#
+# def load_dungeon_assets():
+#     sprite_dict = {}
+#
+#     # 🎯 Load floor & other tiles
+#     tile_path = os.path.join("assets", "tiles")
+#     if os.path.exists(tile_path):
+#         for file in os.listdir(tile_path):
+#             if file.endswith(".png"):
+#                 key = file.split(".")[0].upper()
+#                 path = os.path.join(tile_path, file)
+#                 sprite_dict[key] = load_sprite(path)
+#                 print(f"[TILE] Loaded: {key} from {path}")
+#
+#     # 👹 Load enemy in_dungeon sprites
+#     enemy_base = os.path.join("assets", "enemy_sprites")
+#     if os.path.exists(enemy_base):
+#         for enemy_folder in os.listdir(enemy_base):
+#             in_dungeon_path = os.path.join(enemy_base, enemy_folder, "in_dungeon")
+#             if os.path.exists(in_dungeon_path):
+#                 for file in os.listdir(in_dungeon_path):
+#                     if file.endswith(".png"):
+#                         key = f"ENEMY_{enemy_folder.upper()}"
+#                         path = os.path.join(in_dungeon_path, file)
+#                         sprite_dict[key] = load_sprite(path)
+#                         print(f"[ENEMY] Loaded: {key} from {path}")
+#
+#     # 🧙 Load player in_dungeon sprites
+#     player_base = os.path.join("assets", "sprites")
+#     if os.path.exists(player_base):
+#         for player_folder in os.listdir(player_base):
+#             in_dungeon_path = os.path.join(player_base, player_folder, "in_dungeon")
+#             if os.path.exists(in_dungeon_path):
+#                 for file in os.listdir(in_dungeon_path):
+#                     if file.endswith(".png"):
+#                         key = f"PLAYER_{player_folder.upper()}"
+#                         path = os.path.join(in_dungeon_path, file)
+#                         sprite_dict[key] = load_sprite(path)
+#                         print(f"[PLAYER] Loaded: {key} from {path}")
+#
+#     def load_idle_sprite(name, size=(96, 96)):
+#         """
+#         Loads the battle screen 'idle' sprite for a given character or enemy name.
+#         """
+#         safe_name = name.lower()
+#         filename = f"{safe_name}_idle_0.png"
+#         path = os.path.join("assets", "sprites", safe_name, "idle", filename)
+#
+#         if os.path.exists(path):
+#             sprite = pygame.image.load(path).convert_alpha()
+#             return pygame.transform.scale(sprite, size)
+#         else:
+#             print(f"[ERROR] Idle sprite not found at: {path}")
+#             return pygame.Surface(size, pygame.SRCALPHA)
+#
+#     def load_in_dungeon_sprite_by_name(name, size=(32, 32), is_enemy=False):
+#         """
+#         Dynamically loads in-dungeon sprite for enemies or player units by name.
+#         """
+#         base_folder = "enemy_sprites" if is_enemy else "sprites"
+#         safe_name = name.lower()
+#         filename = f"{safe_name}_in_dungeon.png"
+#         path = os.path.join("assets", base_folder, safe_name, "in_dungeon", filename)
+#
+#         if os.path.exists(path):
+#             sprite = pygame.image.load(path).convert_alpha()
+#             return pygame.transform.scale(sprite, size)
+#         else:
+#             print(f"[ERROR] In-dungeon sprite not found at: {path}")
+#             return pygame.Surface(size, pygame.SRCALPHA)
+#
+#     return sprite_dict
