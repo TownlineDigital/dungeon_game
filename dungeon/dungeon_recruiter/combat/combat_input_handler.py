@@ -48,6 +48,9 @@ class CombatInputHandler:
 
 
             elif action == "Abilities":
+                print(f"[Debug] {current_unit.name} abilities: {getattr(current_unit, 'abilities', None)}")
+                print("[Debug] 'Abilities' option selected.")
+
                 # Show ability submenu for current unit
                 if hasattr(current_unit, "abilities") and current_unit.abilities:
                     self.action_menu.enter_ability_menu(current_unit.abilities)

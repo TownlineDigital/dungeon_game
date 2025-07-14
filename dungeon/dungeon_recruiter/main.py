@@ -1,6 +1,11 @@
 import pygame
 import sys
 import os
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, TITLE_FONT, FONT_BOLD
 from colors import DARK_GREY, WHITE, GREEN, GREY
 from ui_helpers import draw_text, draw_button
@@ -127,6 +132,8 @@ def main():
                     # Handle card click
                     if draw_button(WIN, card_rect, "", GREY, GREEN):
                         game.player = create_player_from_choice(i)
+                        print(f"[DEBUG] Created player: {game.player.name}")
+                        print(f"[DEBUG] Abilities: {[a.name for a in game.player.abilities]}")
                         game.center_camera_on_player()
                         game.state = GameState.SANCTUARY
 
@@ -239,7 +246,7 @@ def main():
                 else:
                     pygame.draw.rect(WIN, (50, 200, 255), player_rect)
 
-                # Handle Movement (✅ PUT IT HERE)
+                # Handle Movement
                 now = pygame.time.get_ticks()
                 keys = pygame.key.get_pressed()
 
@@ -264,82 +271,32 @@ def main():
                     game.notification_timer -= 1
                     if game.notification_timer <= 0:
                         game.notification = ""
-                #
-                # tile_size = 32
-                # player_x, player_y = game.player_map_pos
-                # camera_x = max(0, min(player_x - VIEWPORT_WIDTH // 2, len(game.dungeon_map[0]) - VIEWPORT_WIDTH))
-                # camera_y = max(0, min(player_y - VIEWPORT_HEIGHT // 2, len(game.dungeon_map) - VIEWPORT_HEIGHT))
-                #
-                # # game.dungeon_map, game.enemy_placement = generate_dungeon_map(50, 30, ENEMY_LIST, num_enemies=8, num_treasures=5)
-                #
-                # # 🧱 Draw the dungeon grid
-                #
-                # for y in range(VIEWPORT_HEIGHT):
-                #     for x in range(VIEWPORT_WIDTH):
-                #         map_x = x + camera_x
-                #         map_y = y + camera_y
-                #
-                #         if 0 <= map_x < len(game.dungeon_map[0]) and 0 <= map_y < len(game.dungeon_map):
-                #
-                #             tile = game.dungeon_map[map_y][map_x]
-                #
-                #             rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)  # ✅ Define BEFORE using
-                #
-                #             sprite_key = None
-                #
-                #             if tile == WALL:
-                #                 sprite_key = "WALL"
-                #
-                #             elif tile == FLOOR:
-                #                 sprite_key = "FLOOR"
-                #
-                #             elif tile == ENEMY:
-                #                 enemy = game.enemy_placement.get((map_x, map_y))
-                #                 if enemy:
-                #                     sprite_key = f"ENEMY_{enemy.name.upper().replace(" ", "_")}"
-                #                 # sprite_key = "ENEMY_Goblin"  # Later: randomize or vary based on map
-                #
-                #             elif tile == TREASURE:
-                #                 sprite_key = "TREASURE"
-                #
-                #             if sprite_key in sprites:
-                #                 WIN.blit(sprites[sprite_key], rect)
-                #
-                #             else:
-                #
-                #                 pygame.draw.rect(WIN, (50, 50, 50), rect)  # Fallback if sprite is missing
-                #
-                #     # 🧍 Draw the player
-                #     player_screen_x = (player_x - camera_x) * tile_size
-                #     player_screen_y = (player_y - camera_y) * tile_size
-                #     player_rect = pygame.Rect(player_screen_x, player_screen_y, tile_size, tile_size)
-                #
-                #     player_sprite_key = f"PLAYER_{game.player.name.upper()}"
-                #     player_sprite = sprites.get(player_sprite_key)
-                #
-                #     if player_sprite:
-                #         WIN.blit(player_sprite, (player_screen_x, player_screen_y))
-                #     else:
-                #         pygame.draw.rect(WIN, (50, 200, 255), player_rect)
-
-
 
 
             elif game.state == GameState.COMBAT:
+                # game.combat_initialized = False
                 now = pygame.time.get_ticks()
                 keys = pygame.key.get_pressed()
+
+                print("[Debug] Checking if combat is initializing...")
+
+
 
                 # --- Initialize Combat Components Once ---
                 # if not hasattr(game, "combat_initialized") or not game.combat_initialized:
                 if not getattr(game, "combat_initialized", False):
                     print("[Init] Setting up combat...")
                     game.active_party = [game.player]  # Later: use full party
+                    print(f"[Debug] Active party setup: {[unit.name for unit in game.active_party]}")
+                    print(f"[Debug] {game.player.name}'s abilities: {[a.name for a in game.player.abilities]}")
+
                     game.combat_manager = CombatManager(game.active_party, game.enemy_party)
                     game.combat_menu = PlayerActionMenu()
                     game.combat_input_handler = CombatInputHandler(game.combat_manager, game.combat_menu)
                     game.battle_intro_start = now
                     game.battle_intro_done = False
                     game.combat_initialized = True
+                    print(f"[Debug] Combat initialized: {game.combat_initialized}")
 
                 # --- Battle Intro Message ---
                 if not game.battle_intro_done:

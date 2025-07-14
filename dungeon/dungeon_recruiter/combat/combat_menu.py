@@ -23,12 +23,12 @@ class PlayerActionMenu:
 
     def enter_ability_menu(self, abilities):
         print("[DEBUG] Entering ability menu")
-        self.ability_menu = True
+        self.ability_menu_visible = True
         self.abilities = abilities
         self.selected_ability_index = 0
 
     def exit_ability_menu(self):
-        self.ability_menu = False
+        self.ability_menu_visible = False
         self.abilities = []
         self.selected_ability_index = 0
 

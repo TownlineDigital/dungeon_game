@@ -70,7 +70,7 @@ class CombatManager:
         user.current_mana -= ability.mana_cost
 
         if ability.effect_type == "damage":
-            damage = max(1, ability.power + user.attack - target.defense)
+            damage = max(1, ability.damage + user.attack - target.defense)
             target.current_health = max(0, target.current_health - damage)
             self.battle_log.append(f"{user.name} used {ability.name} on {target.name} for {damage} damage!")
             print(f"[ABILITY] {user.name} used {ability.name} on {target.name} ({damage} dmg)")

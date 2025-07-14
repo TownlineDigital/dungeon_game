@@ -70,11 +70,20 @@ class Game:
                 self.center_camera_on_player()
             elif destination == 2:  # ENEMY
                 self.state = GameState.COMBAT
+                self.combat_initialized = False
                 # Get the enemy at this tile
                 enemy = self.enemy_placement.get((new_x, new_y))
                 if enemy:
                     print(f"Enemy encounter triggered with: {enemy.name}")
                     self.enemy_party = [enemy]  # optional: prep combat system
+
+                    self.dungeon_map[new_y][new_x] = 0  # Set back to FLOOR
+                    self.enemy_placement.pop((new_x, new_y), None)
+
+                    self.player_map_pos = [new_x, new_y]  # ✅ actually move the player
+                    self.center_camera_on_player()  # ✅ recenter camera
+                    self.state = GameState.COMBAT  # ✅ switch to combat mode
+                    self.combat_initialized = False
                 else:
                     print("Enemy encounter triggered, but no enemy found in placement!")
             elif destination == 3:  # TREASURE
