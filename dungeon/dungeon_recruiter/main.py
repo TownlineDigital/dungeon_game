@@ -278,17 +278,17 @@ def main():
                 now = pygame.time.get_ticks()
                 keys = pygame.key.get_pressed()
 
-                print("[Debug] Checking if combat is initializing...")
+                # print("[Debug] Checking if combat is initializing...")
 
 
 
                 # --- Initialize Combat Components Once ---
                 # if not hasattr(game, "combat_initialized") or not game.combat_initialized:
                 if not getattr(game, "combat_initialized", False):
-                    print("[Init] Setting up combat...")
+                    # print("[Init] Setting up combat...")
                     game.active_party = [game.player]  # Later: use full party
-                    print(f"[Debug] Active party setup: {[unit.name for unit in game.active_party]}")
-                    print(f"[Debug] {game.player.name}'s abilities: {[a.name for a in game.player.abilities]}")
+                    # print(f"[Debug] Active party setup: {[unit.name for unit in game.active_party]}")
+                    # print(f"[Debug] {game.player.name}'s abilities: {[a.name for a in game.player.abilities]}")
 
                     game.combat_manager = CombatManager(game.active_party, game.enemy_party)
                     game.combat_menu = PlayerActionMenu()
@@ -296,7 +296,7 @@ def main():
                     game.battle_intro_start = now
                     game.battle_intro_done = False
                     game.combat_initialized = True
-                    print(f"[Debug] Combat initialized: {game.combat_initialized}")
+                    # print(f"[Debug] Combat initialized: {game.combat_initialized}")
 
                 # --- Battle Intro Message ---
                 if not game.battle_intro_done:
@@ -321,21 +321,6 @@ def main():
                 draw_battle_screen(WIN, game.active_party, game.enemy_party, combat_menu=game.combat_menu)
                 pygame.display.update()
 
-                # print(f"Active Party: {[unit.name for unit in game.active_party if unit.current_health > 0]}")
-                # print(f"Enemy Party: {[unit.name for unit in game.enemy_party if unit.current_health > 0]}")
-                # print(f"Battle Over? {game.combat_manager.is_battle_over()}")
-
-                # if game.enemy_party:
-                #     enemy = game.enemy_party[0]
-                #     draw_battle_screen(WIN, game.active_party or [game.player], game.enemy_party or [enemy], message="A Wild Battle Begins!")
-                #
-                # else:
-                #     draw_text(WIN, "Error: No enemy loaded", FONT_BOLD, RED, 100, 100)
-
-
-
-
-                    # ⌨️ Movement
 
                 now = pygame.time.get_ticks()
                 keys = pygame.key.get_pressed()

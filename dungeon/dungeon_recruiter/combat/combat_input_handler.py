@@ -124,6 +124,11 @@ class CombatInputHandler:
 
         enemies = self.combat_manager.get_living_targets(self.combat_manager.enemy_party)
 
+        if not enemies:
+            print("[Debug] No valid targets remaining.")
+            self.reset()
+            return
+
         if keys[pygame.K_LEFT]:
             self.selected_target_index = (self.selected_target_index - 1) % len(enemies)
             self.cooldown = now
@@ -149,6 +154,11 @@ class CombatInputHandler:
         self.mode = "action_menu"
         self.pending_action = None
         self.selected_target_index = 0
+        self.selected_ability = None
+        self.cooldown = 0
+
+        self.action_menu.ability_menu_visible = False
+        self.action_menu.abilities = []
 
 
 
