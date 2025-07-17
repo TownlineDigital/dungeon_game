@@ -6,7 +6,7 @@ from items.gear import Gear
 from dungeon_recruiter.dungeon.dungeon_map.dungeon_map import generate_dungeon_map
 from dungeon_recruiter.data.enemy_data import ENEMY_LIST
 from settings import VIEWPORT_WIDTH, VIEWPORT_HEIGHT
-
+from dungeon_recruiter.units.party_manager import PartyManager
 
 class Game:
     def __init__(self):
@@ -14,14 +14,18 @@ class Game:
         self.clock = pygame.time.Clock()
         self.player = None  # Set when chosen
 
+        # #Input handlers
+        # self.combat_input_handler = None
+        # self.exploration_input_handler = None
+
         #Movement logic
         self.move_timer = 0
         self.move_cooldown = 150
 
         # Sanctuary Setup
-        self.sanctuary_roster = [
-            Enemy("Goblin Grunt", 40, 10, 8, 2, 6, "Common")
-        ]
+        # self.sanctuary_roster = [
+        #     Enemy("Goblin Grunt", 40, 10, 8, 2, 6, "Common")
+        # ]
 
         # Inventory and gear
         self.inventory = {
@@ -39,14 +43,23 @@ class Game:
         self.player_map_pos = [30, 20]
 
         # Combat (later)
-        self.active_party = []
+        # self.active_party = []
+        self.party_manager = PartyManager()
         self.enemy_party = []
         self.dungeon_party = []
         # self.battle_intro_done = False
+        self.combat_initialized = False
+        self.combat_manager = None
+        self.combat_menu = None
+        self.combat_input_handler = None  # ✅ Prevents AttributeError
+        self.battle_intro_start = 0
+        self.battle_intro_done = False
 
         # UI
         self.notification = ""
         self.notification_timer = 0
+
+        self.exploration_input_handler = None
 
     def set_notification(self, message):
         self.notification = message
@@ -76,6 +89,10 @@ class Game:
                 if enemy:
                     print(f"Enemy encounter triggered with: {enemy.name}")
                     self.enemy_party = [enemy]  # optional: prep combat system
+                    self.player_party = [
+                        (ally.clone() if hasattr(ally, "clone") else ally)
+                        for ally in self.active_party
+                    ]
 
                     self.dungeon_map[new_y][new_x] = 0  # Set back to FLOOR
                     self.enemy_placement.pop((new_x, new_y), None)

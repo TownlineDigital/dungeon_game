@@ -68,3 +68,5 @@ enemy_abilities = {
         ),
     ]
 }
+
+print(enemy_abilities["Goblin"])

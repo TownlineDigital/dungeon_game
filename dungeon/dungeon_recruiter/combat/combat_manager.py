@@ -1,8 +1,10 @@
 import random
+from game_state import GameState
 
 class CombatManager:
-    def __init__(self, player_party, enemy_party):
-        self.player_party = player_party
+    def __init__(self, party_manager, enemy_party):
+        self.party_manager = party_manager
+        self.player_party = party_manager.active_party
         self.enemy_party = enemy_party
         self.all_units = player_party + enemy_party
 
@@ -85,28 +87,104 @@ class CombatManager:
 
         self.advance_turn()
 
-    def attempt_recruit(self, player, target):
+    def attempt_recruit(self, player, target, game):
         """
-        Attempt to recruit a weakened enemy.
+        Attempt to recruit a weakened enemy and manage where they go.
         """
+        if not target or target.current_health <= 0:
+            msg = "You can't recruit that enemy."
+            self.battle_log.append(msg)
+            print(f"[Recruit] {msg}")
+            self.advance_turn()
+            return
+
         if target.current_health > target.max_health * 0.5:
             msg = f"{target.name} is too strong to recruit!"
             self.battle_log.append(msg)
-            print(msg)
-            return False
+            print(f"[Recruit] {msg}")
+            self.advance_turn()
+            return
 
         chance = min(90, 30 + player.recruiting * 5)
         roll = random.randint(1, 100)
+        print(f"[Recruit] Roll: {roll}, Chance: {chance}")
+
         if roll <= chance:
             msg = f"{player.name} successfully recruited {target.name}!"
             self.battle_log.append(msg)
-            print(msg)
-            return True
+            print(f"[Recruit] {msg}")
+
+            # Remove from combat
+            if target in self.enemy_party:
+                self.enemy_party.remove(target)
+            if target in self.turn_order:
+                self.turn_order.remove(target)
+
+            # 🔁 Always use clone:
+            new_ally = target.clone()
+            game.party_manager.add_unit(new_ally)
+
+            if game.party_manager.can_add_to_active():
+                game.party_manager.add_to_active(new_ally)
+                print(f"[Recruit] {target.name} added to active party.")
+            else:
+                game.party_manager.add_to_sanctuary(new_ally)
+                print(f"[Recruit] {target.name} added to sanctuary.")
         else:
             msg = f"{player.name}'s recruit attempt failed!"
             self.battle_log.append(msg)
-            print(msg)
-            return False
+            print(f"[Recruit] {msg}")
+
+        self.advance_turn()
+
+    # def attempt_recruit(self, player, target, game):
+    #     """
+    #     Attempt to recruit a weakened enemy and manage where they go.
+    #     """
+    #     if not target or target.current_health <= 0:
+    #         msg = "You can't recruit that enemy."
+    #         self.battle_log.append(msg)
+    #         print(f"[Recruit] {msg}")
+    #         self.advance_turn()
+    #         return
+    #
+    #     if target.current_health > target.max_health * 0.5:
+    #         msg = f"{target.name} is too strong to recruit!"
+    #         self.battle_log.append(msg)
+    #         print(f"[Recruit] {msg}")
+    #         self.advance_turn()
+    #         return
+    #
+    #     chance = min(90, 30 + player.recruiting * 5)
+    #     roll = random.randint(1, 100)
+    #     print(f"[Recruit] Roll: {roll}, Chance: {chance}")
+    #
+    #     if roll <= chance:
+    #         msg = f"{player.name} successfully recruited {target.name}!"
+    #         self.battle_log.append(msg)
+    #         print(f"[Recruit] {msg}")
+    #
+    #         # Remove from combat
+    #         if target in self.enemy_party:
+    #             self.enemy_party.remove(target)
+    #         if target in self.turn_order:
+    #             self.turn_order.remove(target)
+    #
+    #         # Add to active party or sanctuary
+    #         if len(game.active_party) < 3:  # adjust team size limit as needed
+    #             new_ally = target.clone()
+    #             game.active_party.append(new_ally)
+    #             print(f"[Recruit] {target.name} added to active party.")
+    #         else:
+    #             game.sanctuary_roster.append(target)
+    #             print(f"[Recruit] {target.name} added to sanctuary.")
+    #
+    #     else:
+    #         msg = f"{player.name}'s recruit attempt failed!"
+    #         self.battle_log.append(msg)
+    #         print(f"[Recruit] {msg}")
+    #
+    #     self.advance_turn()
 
     def retreat(self, player):
         """
@@ -146,3 +224,26 @@ class CombatManager:
             print(f"[ACTION] Waiting for player action: {current.name}")
             # UI-driven input should handle player's choice (attack, ability, etc.)
 
+    def end_combat_if_no_enemies(self, game):
+        living_enemies = self.get_living_targets(self.enemy_party)
+
+        if not living_enemies:
+            print("[Combat] All enemies defeated!")
+
+            # Calculate total XP (simple example)
+            total_xp = sum(enemy.max_health for enemy in self.enemy_party)  # or any logic you prefer
+            # game.player.xp += total_xp
+            print(f"[Combat] {game.player.name} gained {total_xp} XP!")
+
+            # Optional: Level-up check here
+
+            # Reset combat-related state
+            self.enemy_party.clear()
+            self.turn_order.clear()
+            self.battle_log.clear()
+            game.player_party = game.party_manager.refresh_combat_party()
+
+
+            # Return to exploration
+            game.state = GameState.EXPLORATION
+            game.set_notification("Combat ended. Back to exploring!")

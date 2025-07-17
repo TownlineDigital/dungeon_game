@@ -19,7 +19,8 @@ class Enemy(Unit):
         description="",
         sprite_folder="",
         abilities=None,
-        recruit_chance=.25
+        recruit_chance=.25,
+        recruiting = 0
     ):
         super().__init__(name, health, mana, attack, defense, speed)
         self.rarity = rarity
@@ -36,6 +37,8 @@ class Enemy(Unit):
         self.recruit_chance = 0.25  # Default recruit chance
         self.recruitable = True  # can this enemy type ever be recruited
         self.is_recruitable = False  # is it recruitable *right now*
+        self.recruiting = recruiting
+
 
     def gain_exp(self, amount, game):
         self.exp += amount
@@ -91,3 +94,15 @@ class Enemy(Unit):
         Returns True if this enemy is currently eligible for recruitment.
         """
         return self.is_recruitable
+
+    def clone(self):
+        return Enemy(
+            name = self.name,
+            health = self.max_health,
+            attack = self.attack,
+            defense = self.base_defense,
+            speed = self.speed,
+            mana = self.base_max_mana,
+            recruiting = self.recruiting,
+            rarity = self.rarity
+        )

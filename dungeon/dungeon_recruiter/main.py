@@ -1,8 +1,6 @@
 import pygame
 import sys
 import os
-import sys
-import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -21,58 +19,36 @@ from dungeon_recruiter.data.enemy_data import ENEMY_LIST
 from dungeon_recruiter.dungeon.dungeon_map.dungeon_map import generate_dungeon_map
 # from dungeon_recruiter.units.player import Player  --- Testing the UI with 4 characters on both side
 # from dungeon_recruiter.units.enemy import Enemy
-
-
-print(os.getcwd())
-
-
-# --- Pygame Setup ---
-pygame.init()
-WIN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Dungeon Recruiter: Loot & Legends")
-
-tile_size = 32  # Define this if not already defined above
-
-# How many tiles fit on screen
-VIEWPORT_WIDTH = SCREEN_WIDTH // tile_size
-VIEWPORT_HEIGHT = SCREEN_HEIGHT // tile_size
-
-TILE_SIZE = 64
-sprites = load_dungeon_assets(tile_size=TILE_SIZE)
-
-from animations import load_animation_frames_by_type, CharacterAnimationManager
-
-character_animations = {
-    "Knight": CharacterAnimationManager(load_animation_frames_by_type("assets/sprites/knight")),
-    "Mage": CharacterAnimationManager(load_animation_frames_by_type("assets/sprites/mage")),
-    "Rogue": CharacterAnimationManager(load_animation_frames_by_type("assets/sprites/rogue")),
-    "Cleric": CharacterAnimationManager(load_animation_frames_by_type("assets/sprites/cleric")),
-    "Barbarian": CharacterAnimationManager(load_animation_frames_by_type("assets/sprites/barbarian"))
-    }
-
-# --- Create Game Instance ---
-game = Game()
-game.state = GameState.CHARACTER_SELECT
-
+from input_handler import handle_input, handle_exploration_input, handle_combat_input
 from dungeon_recruiter.combat.combat_menu import PlayerActionMenu
 from dungeon_recruiter.combat.combat_manager import CombatManager
-
-combat_menu = PlayerActionMenu()
-combat_manager = CombatManager(game.active_party, game.enemy_party)
-combat_input = CombatInputHandler(combat_manager, combat_menu)
+from engine_init import initialize_engine
+from settings import TILE_SIZE, VIEWPORT_HEIGHT, VIEWPORT_WIDTH
+from assets.sprite_loader import get_loaded_sprites
+from core.game_initializer import initialize_game
+# from dungeon_recruiter.assets.animation_loader import load_character_animations
+from input_handler import handle_exploration_input
 
 
 # --- Main Game Loop ---
 def main():
+    WIN = initialize_engine()
+    game = initialize_game()
+
+    # game.exploration_input_handler = ExplorationInputHandler(game)
+
+    from dungeon_recruiter.assets.animation_loader import character_animations
+
+    sprites = get_loaded_sprites(tile_size=TILE_SIZE)
+    # game = Game()
     try:
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
         clock = pygame.time.Clock()
 
         while True:
+            # Handle Movement
+
+            now = pygame.time.get_ticks()
+            keys = pygame.key.get_pressed()
             clock.tick(FPS)
             WIN.fill(DARK_GREY)
             clicked = False
@@ -83,29 +59,6 @@ def main():
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     clicked = True
-
-            # if game.state == GameState.EXPLORATION:
-            #     now = pygame.time.get_ticks()
-            #     keys = pygame.key.get_pressed()
-            #
-            #     if now - game.move_timer > game.get_move_cooldown():
-            #         moved = False
-            #
-            #         if keys[pygame.K_UP]:
-            #             game.move_player(0, -1)
-            #             moved = True
-            #         elif keys[pygame.K_DOWN]:
-            #             game.move_player(0, 1)
-            #             moved = True
-            #         elif keys[pygame.K_LEFT]:
-            #             game.move_player(-1, 0)
-            #             moved = True
-            #         elif keys[pygame.K_RIGHT]:
-            #             game.move_player(1, 0)
-            #             moved = True
-            #
-            #         if moved:
-            #             game.move_timer = now
 
             # --- Game States ---
             if game.state == GameState.CHARACTER_SELECT:
@@ -156,16 +109,6 @@ def main():
                             frame_rect = resized.get_rect(center=(SCREEN_WIDTH // 2, 160))
                             WIN.blit(resized, frame_rect)
 
-                    # if is_hovering:
-                    #     hovered_description = data.get("description", "")
-                    #     hovered_x = card_rect.centerx
-                    #
-                    #     # ✅ Only show animation if THIS is the Knight card
-                    #     if data["name"] == "Knight" and "Knight" in character_animations:
-                    #         frame = character_animations["Knight"].get_current_frame()
-                    #         resized_frame = pygame.transform.scale(frame, (120, 120))
-                    #         frame_rect = resized_frame.get_rect(center=(SCREEN_WIDTH // 2, 160))
-                    #         WIN.blit(resized_frame, frame_rect)
 
 
                     # Draw stats
@@ -201,9 +144,8 @@ def main():
                 player_x, player_y = game.player_map_pos
                 camera_x = game.camera_x
                 camera_y = game.camera_y
+                handle_exploration_input(game, keys, now)
 
-                # camera_x = max(0, min(player_x - VIEWPORT_WIDTH // 2, len(game.dungeon_map[0]) - VIEWPORT_WIDTH))
-                # camera_y = max(0, min(player_y - VIEWPORT_HEIGHT // 2, len(game.dungeon_map) - VIEWPORT_HEIGHT))
 
                 # Draw Dungeon Tiles
                 for y in range(VIEWPORT_HEIGHT):
@@ -246,24 +188,38 @@ def main():
                 else:
                     pygame.draw.rect(WIN, (50, 200, 255), player_rect)
 
-                # Handle Movement
-                now = pygame.time.get_ticks()
-                keys = pygame.key.get_pressed()
 
-                if now - game.move_timer > game.get_move_cooldown():
-                    dx, dy = 0, 0
-                    if keys[pygame.K_w]:
-                        dy = -1
-                    elif keys[pygame.K_s]:
-                        dy = 1
-                    elif keys[pygame.K_a]:
-                        dx = -1
-                    elif keys[pygame.K_d]:
-                        dx = 1
+                # if game.state == GameState.COMBAT:
+                #     if game.combat_input_handler:
+                #         game.combat_input_handler.update(keys, now)
+                #     else:
+                #         print("[Warning] combat_input_handler not initialized yet.")
+                # elif game.state == GameState.EXPLORATION:
+                #     if game.exploration_input_handler:
+                #         game.exploration_input_handler.update(keys, now)
+                #     else:
+                #         print("[Warning] exploration_input_handler not initialized yet.")
 
-                    if dx != 0 or dy != 0:
-                        game.move_player(dx, dy)
-                        game.move_timer = now
+                if game.state == GameState.COMBAT:
+                    if not getattr(game, "combat_initialized", False):
+                        # Setup combat components only once when combat starts
+                        game.active_party = [game.player]  # Later this might include more units
+                        game.combat_manager = CombatManager(game.active_party, game.enemy_party)
+                        game.combat_menu = PlayerActionMenu()
+                        game.combat_input_handler = CombatInputHandler(game.combat_manager, game.combat_menu, game)
+                        game.battle_intro_start = now
+                        game.battle_intro_done = False
+                        game.combat_initialized = True
+
+                    if game.state == GameState.COMBAT and game.combat_input_handler:
+                        game.combat_input_handler.update(keys, now)
+
+
+
+                # handle_input(game, keys, now)
+
+                # game.combat_input = CombatInputHandler(game.combat_manager, game.combat_menu)
+                # game.combat_input_handler = CombatInputHandler(CombatManager, combat_menu)
 
                 # Notification
                 if game.notification:
@@ -292,7 +248,7 @@ def main():
 
                     game.combat_manager = CombatManager(game.active_party, game.enemy_party)
                     game.combat_menu = PlayerActionMenu()
-                    game.combat_input_handler = CombatInputHandler(game.combat_manager, game.combat_menu)
+                    game.combat_input = CombatInputHandler(game.combat_manager, game.combat_menu)
                     game.battle_intro_start = now
                     game.battle_intro_done = False
                     game.combat_initialized = True
